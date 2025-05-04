@@ -59,6 +59,7 @@ interface UseWebRTCResult {
   localStream: MediaStream | null;
   peerStreams: PeerStreams;
   selectedStream: string | null;
+  // eslint-disable-next-line no-unused-vars
   selectStream: (streamOwnerId: string) => void;
   shareScreen: () => Promise<MediaStream | null>;
   stopSharing: () => void;
