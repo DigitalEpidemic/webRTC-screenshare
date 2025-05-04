@@ -48,7 +48,9 @@ export function Home({ onJoinRoom }: HomeProps): React.ReactElement {
     <div className="container mx-auto max-w-4xl px-4 py-12">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-primary-900 mb-2">Screen Share</h1>
-        <p className="text-secondary-600 text-lg">Create or join a room to collaborate with screen sharing</p>
+        <p className="text-secondary-600 text-lg">
+          Create or join a room to collaborate with screen sharing
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -56,16 +58,16 @@ export function Home({ onJoinRoom }: HomeProps): React.ReactElement {
         <div className="bg-white rounded-xl shadow-lg p-6 border border-secondary-200">
           <h2 className="text-2xl font-semibold text-primary-800 mb-4">Create a Room</h2>
           <p className="text-secondary-600 mb-6">Create a new room and invite others to join</p>
-          
+
           <div className="flex items-center gap-2 mb-6">
             <input
               type="text"
               value={newRoomId}
-              onChange={(e) => setNewRoomId(e.target.value)}
+              onChange={e => setNewRoomId(e.target.value)}
               placeholder="Room ID (auto-generated)"
               className="w-full p-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
-            <button 
+            <button
               onClick={generateRoomId}
               className="p-3 bg-secondary-100 text-secondary-700 rounded-lg hover:bg-secondary-200 transition-colors"
               aria-label="Generate new room ID"
@@ -78,8 +80,8 @@ export function Home({ onJoinRoom }: HomeProps): React.ReactElement {
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-secondary-700">Share this link:</span>
-                <button 
-                  onClick={copyToClipboard} 
+                <button
+                  onClick={copyToClipboard}
                   className="text-primary-600 hover:text-primary-800 flex items-center gap-1 text-sm"
                 >
                   <Copy size={14} /> {copied ? 'Copied!' : 'Copy'}
@@ -104,12 +106,12 @@ export function Home({ onJoinRoom }: HomeProps): React.ReactElement {
         <div className="bg-white rounded-xl shadow-lg p-6 border border-secondary-200">
           <h2 className="text-2xl font-semibold text-primary-800 mb-4">Join a Room</h2>
           <p className="text-secondary-600 mb-6">Enter a room ID to join an existing room</p>
-          
+
           <div className="mb-6">
             <input
               type="text"
               value={joinRoomId}
-              onChange={(e) => setJoinRoomId(e.target.value)}
+              onChange={e => setJoinRoomId(e.target.value)}
               placeholder="Enter Room ID"
               className="w-full p-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
@@ -145,4 +147,4 @@ export function Home({ onJoinRoom }: HomeProps): React.ReactElement {
       </div>
     </div>
   );
-} 
+}

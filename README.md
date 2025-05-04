@@ -29,20 +29,24 @@ A modern WebRTC-based screen sharing application that allows real-time collabora
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone git@github.com:DigitalEpidemic/webRTC-screenshare.git
    cd webRTC-screenshare
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Start the development server:
+
    ```bash
    npm run dev
    ```
+
    This will start both the React dev server and the WebSocket signaling server.
 
 4. Visit `http://localhost:5173` in your browser to use the application.
@@ -50,22 +54,26 @@ A modern WebRTC-based screen sharing application that allows real-time collabora
 ## Usage
 
 1. **Creating a Room**:
+
    - Visit the home page
    - Use the auto-generated room ID or enter a custom one
    - Click "Create Room" to start a new session
    - Share the generated room link with others you want to invite
 
 2. **Joining a Room**:
+
    - Enter a room ID in the "Join a Room" section
    - Click "Join Room" to enter an existing session
    - Alternatively, use a shared room link
 
 3. **Sharing Your Screen**:
+
    - Once in a room, click the "Share Screen" button at the bottom of the video area
    - Select which screen/window/tab you want to share in the browser dialog
    - To stop sharing, click "Stop Sharing" or end the share from your browser's UI
 
 4. **Viewing Shared Screens**:
+
    - Open the "Participants" panel to see who is sharing their screen
    - Click on any participant who is sharing to view their screen
    - You can switch between different shared screens at any time
@@ -85,6 +93,7 @@ The application uses WebRTC for direct peer-to-peer connections between particip
 ## Browser Compatibility
 
 This application works best in modern browsers with WebRTC support:
+
 - Google Chrome (recommended)
 - Firefox
 - Microsoft Edge
@@ -99,4 +108,4 @@ This project is licensed under the MIT License.
 - [WebRTC](https://webrtc.org/) for the real-time communication technology
 - [Simple-Peer](https://github.com/feross/simple-peer) for simplifying WebRTC implementation
 - [Tailwind CSS](https://tailwindcss.com/) for the styling framework
-- [Lucide Icons](https://lucide.dev/) for the beautiful icons 
+- [Lucide Icons](https://lucide.dev/) for the beautiful icons

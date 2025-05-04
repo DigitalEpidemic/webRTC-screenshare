@@ -6,7 +6,7 @@
   .animate-slide-in {
     animation: slideIn 0.3s ease forwards;
   }
-  
+
   @keyframes slideIn {
     from {
       transform: translateX(100%);
@@ -19,6 +19,8 @@
   }
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
-} 
+}

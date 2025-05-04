@@ -10,7 +10,7 @@ export default function App(): React.ReactElement {
   useEffect(() => {
     const handleNavigation = (): void => {
       const path = window.location.pathname;
-      
+
       if (path === '/') {
         setCurrentPage('home');
         setRoomId(null);
@@ -24,7 +24,7 @@ export default function App(): React.ReactElement {
     };
 
     handleNavigation();
-    
+
     // Handle browser back/forward navigation
     window.addEventListener('popstate', handleNavigation);
     return () => window.removeEventListener('popstate', handleNavigation);
@@ -41,17 +41,16 @@ export default function App(): React.ReactElement {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100">
       {currentPage === 'home' && (
-        <Home onJoinRoom={(id: string) => {
-          navigate(`/room/${id}`);
-        }} />
-      )}
-      
-      {currentPage === 'room' && roomId && (
-        <Room 
-          roomId={roomId} 
-          onLeaveRoom={() => navigate('/')}
+        <Home
+          onJoinRoom={(id: string) => {
+            navigate(`/room/${id}`);
+          }}
         />
+      )}
+
+      {currentPage === 'room' && roomId && (
+        <Room roomId={roomId} onLeaveRoom={() => navigate('/')} />
       )}
     </div>
   );
-} 
+}

@@ -20,4 +20,4 @@ interface UseWebRTCResult {
   userId: string;
 }
 
-export function useWebRTC(props: UseWebRTCProps): UseWebRTCResult; 
+export function useWebRTC(props: UseWebRTCProps): UseWebRTCResult;

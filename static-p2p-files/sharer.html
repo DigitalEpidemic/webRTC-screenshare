@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <title>Sharer</title>
@@ -6,41 +6,35 @@
   <body>
     <h1>Sharer</h1>
     <button id="start">Start Screen Share</button>
-    <video
-      id="screen"
-      autoplay
-      playsinline
-      style="border: 2px solid red; width: 100%"
-    ></video>
+    <video id="screen" autoplay playsinline style="border: 2px solid red; width: 100%"></video>
     <script src="https://unpkg.com/simple-peer@9.11.1/simplepeer.min.js"></script>
     <script>
-      const socket = new WebSocket("ws://localhost:3000");
+      const socket = new WebSocket('ws://localhost:3000');
       let peer;
 
-      socket.onopen = () =>
-        socket.send(JSON.stringify({ type: "join", room: "screen-room" }));
+      socket.onopen = () => socket.send(JSON.stringify({ type: 'join', room: 'screen-room' }));
 
-      document.getElementById("start").onclick = async () => {
+      document.getElementById('start').onclick = async () => {
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
         });
-        document.getElementById("screen").srcObject = stream;
+        document.getElementById('screen').srcObject = stream;
         peer = new SimplePeer({ initiator: true, trickle: false, stream });
 
-        peer.on("signal", (data) => {
+        peer.on('signal', data => {
           socket.send(JSON.stringify(data));
         });
 
-        socket.onmessage = (e) => {
+        socket.onmessage = e => {
           const signal = JSON.parse(e.data);
           peer.signal(signal);
         };
 
-        peer.on("connect", () => {
-          console.log("Connected to viewer");
+        peer.on('connect', () => {
+          console.log('Connected to viewer');
         });
 
-        peer.on("error", (err) => console.error("Peer error:", err));
+        peer.on('error', err => console.error('Peer error:', err));
       };
     </script>
   </body>
