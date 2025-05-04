@@ -10,7 +10,12 @@
     "client": "cross-env NODE_ENV=development vite",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "cross-env NODE_ENV=production tsc && vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md,html}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md,html}\"",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --ext .js,.jsx,.ts,.tsx --fix",
+    "lint-format": "npm run lint:fix && npm run format"
   },
   "keywords": [],
   "author": "",
@@ -27,21 +32,31 @@
     "ws": "^8.18.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.26.0",
     "@types/express": "^5.0.1",
     "@types/node": "^22.15.3",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.3",
     "@types/simple-peer": "^9.11.8",
     "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
+    "eslint": "^9.26.0",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-prettier": "^5.3.1",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.0.0",
     "lucide-react": "^0.330.0",
     "nodemon": "^3.0.3",
     "postcss": "^8.4.31",
+    "prettier": "^3.5.3",
     "tailwindcss": "^3.3.5",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.31.1",
     "vite": "^5.0.10"
   }
 }

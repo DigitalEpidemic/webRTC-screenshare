@@ -1,0 +1,20 @@
+# Build outputs
+dist/
+build/
+
+# Node modules
+node_modules/
+
+# Package files
+package-lock.json
+package.json
+
+# Config files that might have specific formatting
+*.config.js
+tsconfig.json
+tsconfig.node.json
+
+# Other files to ignore
+.DS_Store
+.git/
+.gitignore 
