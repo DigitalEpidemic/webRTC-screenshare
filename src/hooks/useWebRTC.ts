@@ -773,69 +773,6 @@ export function useWebRTC({ roomId }: UseWebRTCProps): UseWebRTCResult {
         addTracksToConnection(pc, peerId);
       }
       
-      // Set a connection timeout with progressive recovery actions
-      const connectionTimeouts: NodeJS.Timeout[] = [];
-      
-      // First timeout - check connection after 5 seconds
-      const timeout1 = setTimeout(() => {
-        if (peerConnections.current[peerId] === pc &&
-            (pc.iceConnectionState === 'checking' || pc.iceConnectionState === 'new')) {
-          console.log(`Connection with ${peerId} still establishing after 5s, sending more candidates`);
-          try {
-            // Try to gather more ICE candidates
-            pc.restartIce();
-          } catch (e) {
-            console.warn('Error restarting ICE:', e);
-          }
-        }
-      }, 5000);
-      connectionTimeouts.push(timeout1);
-      
-      // Second timeout - restart more aggressively after 10 seconds
-      const timeout2 = setTimeout(() => {
-        if (peerConnections.current[peerId] === pc &&
-            (pc.iceConnectionState === 'checking' || pc.iceConnectionState === 'new' || 
-             pc.iceConnectionState === 'disconnected')) {
-          console.log(`Connection with ${peerId} taking too long (10s), trying renegotiation`);
-          
-          // If we're the initiator, try creating a new offer
-          if (isInitiator && pc.signalingState === 'stable') {
-            console.log(`Creating new offer for ${peerId} to restart negotiation`);
-            pc.createOffer()
-              .then(offer => pc.setLocalDescription(offer))
-              .then(() => {
-                if (socket.current && socket.current.connected) {
-                  socket.current.emit('signal', {
-                    type: 'offer',
-                    offer: pc.localDescription,
-                    target: peerId,
-                    from: userId.current
-                  });
-                }
-              })
-              .catch(error => {
-                console.error('Error creating restart offer:', error);
-              });
-          }
-        }
-      }, 10000);
-      connectionTimeouts.push(timeout2);
-      
-      // Final timeout - consider connection failed after 20 seconds
-      const timeout3 = setTimeout(() => {
-        if (peerConnections.current[peerId] === pc &&
-            (pc.iceConnectionState !== 'connected' && pc.iceConnectionState !== 'completed')) {
-          console.log(`Connection with ${peerId} failed after 20s, recreating connection`);
-          
-          // Only recreate if this is still the active connection
-          if (peerConnections.current[peerId] === pc) {
-            console.warn(`Recreating failed connection with ${peerId}`);
-            createPeerConnection(peerId, isInitiator);
-          }
-        }
-      }, 20000);
-      connectionTimeouts.push(timeout3);
-      
       // Handle ICE candidates
       pc.onicecandidate = (event) => {
         if (event.candidate && socket.current && socket.current.connected) {
@@ -864,12 +801,6 @@ export function useWebRTC({ roomId }: UseWebRTCProps): UseWebRTCResult {
       // Log ICE connection state changes
       pc.oniceconnectionstatechange = () => {
         console.log(`ICE connection state with ${peerId}: ${pc.iceConnectionState}`);
-        
-        // Clear the timeouts if connection is established or failed
-        if (pc.iceConnectionState === 'connected' || 
-            pc.iceConnectionState === 'completed') {
-          connectionTimeouts.forEach(clearTimeout);
-        }
         
         // If ICE connection failed, try reconnecting with progressive backoff
         if (pc.iceConnectionState === 'failed') {
@@ -934,9 +865,6 @@ export function useWebRTC({ roomId }: UseWebRTCProps): UseWebRTCResult {
           
           // Connection is established, we can allow renegotiation
           isInitialSetup = false;
-          
-          // Clear all timeouts
-          connectionTimeouts.forEach(clearTimeout);
           
           // If we're sharing a screen, make sure the peer has our tracks
           if (localStreamRef.current && !streamSenders.current[peerId]?.length) {
