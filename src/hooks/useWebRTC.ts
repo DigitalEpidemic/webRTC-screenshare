@@ -1133,7 +1133,7 @@ export function useWebRTC({ roomId }: UseWebRTCProps): UseWebRTCResult {
             const emptyDesc = { type: 'rollback' } as RTCSessionDescription;
             pc.setLocalDescription(emptyDesc).catch(err => console.warn('Rollback failed:', err));
           } catch (e) {
-            console.warn('Rollback not supported, trying to proceed anyway');
+            console.warn('Rollback not supported, trying to proceed anyway', e);
           }
         }
 
@@ -1407,7 +1407,7 @@ export function useWebRTC({ roomId }: UseWebRTCProps): UseWebRTCResult {
   useEffect(() => {
     // Identify peers that are marked as sharing (in peerStreams) but have null streams
     const peersWithNullStreams = Object.entries(peerStreams)
-      .filter(([_, stream]) => stream === null)
+      .filter(([, stream]) => stream === null)
       .map(([peerId]) => peerId);
 
     if (peersWithNullStreams.length > 0) {
