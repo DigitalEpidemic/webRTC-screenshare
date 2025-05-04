@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Monitor, User, Copy, X, UserPlus, Users, ArrowLeft, Video, VideoOff, Maximize, Minimize } from 'lucide-react';
+import { Monitor, User, Copy, X, UserPlus, Users, ArrowLeft, Video, VideoOff } from 'lucide-react';
 import { useWebRTC } from '../hooks/useWebRTC';
 
 export function Room({ roomId, onLeaveRoom }) {
   const [copied, setCopied] = useState(false);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(false);
   const videoRef = useRef(null);
   const videoContainerRef = useRef(null);
   
@@ -97,48 +96,6 @@ export function Room({ roomId, onLeaveRoom }) {
     });
   }, [localStream, peerStreams, selectedStream]);
 
-  // Toggle fullscreen mode
-  const toggleFullScreen = () => {
-    if (!document.fullscreenElement) {
-      if (videoContainerRef.current.requestFullscreen) {
-        videoContainerRef.current.requestFullscreen();
-      } else if (videoContainerRef.current.webkitRequestFullscreen) {
-        videoContainerRef.current.webkitRequestFullscreen();
-      } else if (videoContainerRef.current.msRequestFullscreen) {
-        videoContainerRef.current.msRequestFullscreen();
-      }
-      setIsFullScreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
-      setIsFullScreen(false);
-    }
-  };
-
-  // Listen for fullscreen change events
-  useEffect(() => {
-    const handleFullScreenChange = () => {
-      setIsFullScreen(Boolean(document.fullscreenElement));
-    };
-    
-    document.addEventListener('fullscreenchange', handleFullScreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullScreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullScreenChange);
-    
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullScreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
-      document.removeEventListener('MSFullscreenChange', handleFullScreenChange);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-secondary-50 flex flex-col">
       {/* Header */}
@@ -203,24 +160,16 @@ export function Room({ roomId, onLeaveRoom }) {
             <div className="flex-1 bg-white rounded-xl overflow-hidden shadow-md">
               <div 
                 ref={videoContainerRef}
-                className={`bg-secondary-900 aspect-video flex items-center justify-center relative ${isFullScreen ? 'fullscreen-video' : ''}`}
+                className="bg-secondary-900 aspect-video flex items-center justify-center relative"
               >
                 {(selectedStream && (peerStreams[selectedStream] || (selectedStream === userId && localStream))) || localStream ? (
-                  <>
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-contain"
-                    />
-                    <button
-                      onClick={toggleFullScreen}
-                      className="absolute bottom-3 right-3 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
-                      aria-label={isFullScreen ? "Exit full screen" : "Enter full screen"}
-                    >
-                      {isFullScreen ? <Minimize size={20} /> : <Maximize size={20} />}
-                    </button>
-                  </>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    controls
+                    className="w-full h-full object-contain"
+                  />
                 ) : (
                   <div className="text-center text-secondary-400 p-8">
                     <div>
