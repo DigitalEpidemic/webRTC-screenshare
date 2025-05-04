@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Home } from './pages/Home';
 import { Room } from './pages/Room';
 
-export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [roomId, setRoomId] = useState(null);
+export default function App(): React.ReactElement {
+  const [currentPage, setCurrentPage] = useState<'home' | 'room'>('home');
+  const [roomId, setRoomId] = useState<string | null>(null);
 
   // Simple routing based on URL pathname
   useEffect(() => {
-    const handleNavigation = () => {
+    const handleNavigation = (): void => {
       const path = window.location.pathname;
       
       if (path === '/') {
@@ -31,7 +31,7 @@ export default function App() {
   }, []);
 
   // Navigation function
-  const navigate = (path) => {
+  const navigate = (path: string): void => {
     window.history.pushState({}, '', path);
     const popStateEvent = new PopStateEvent('popstate', {});
     window.dispatchEvent(popStateEvent);
@@ -41,7 +41,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-100">
       {currentPage === 'home' && (
-        <Home onJoinRoom={(id) => {
+        <Home onJoinRoom={(id: string) => {
           navigate(`/room/${id}`);
         }} />
       )}

@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Monitor, User, Copy, X, UserPlus, Users, ArrowLeft, Video, VideoOff } from 'lucide-react';
+import { Monitor, Copy, X, Users, ArrowLeft, VideoOff } from 'lucide-react';
 import { useWebRTC } from '../hooks/useWebRTC';
 
-export function Room({ roomId, onLeaveRoom }) {
-  const [copied, setCopied] = useState(false);
-  const [isSharingScreen, setIsSharingScreen] = useState(false);
-  const [showParticipants, setShowParticipants] = useState(false);
-  const videoRef = useRef(null);
-  const videoContainerRef = useRef(null);
+interface RoomProps {
+  roomId: string;
+  onLeaveRoom: () => void;
+}
+
+export function Room({ roomId, onLeaveRoom }: RoomProps): React.ReactElement {
+  const [copied, setCopied] = useState<boolean>(false);
+  const [isSharingScreen, setIsSharingScreen] = useState<boolean>(false);
+  const [showParticipants, setShowParticipants] = useState<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
   
   const {
     isConnected,
@@ -26,7 +31,7 @@ export function Room({ roomId, onLeaveRoom }) {
   // Set the video stream
   useEffect(() => {
     if (videoRef.current) {
-      let streamToShow = null;
+      let streamToShow: MediaStream | null = null;
       
       // Determine which stream to show
       if (selectedStream) {
@@ -59,7 +64,7 @@ export function Room({ roomId, onLeaveRoom }) {
   }, [localStream, peerStreams, selectedStream, userId]);
 
   // Handle screen sharing
-  const handleShareScreen = async () => {
+  const handleShareScreen = async (): Promise<void> => {
     if (isSharingScreen) {
       stopSharing();
       setIsSharingScreen(false);
@@ -78,7 +83,7 @@ export function Room({ roomId, onLeaveRoom }) {
   };
 
   // Copy room link to clipboard
-  const copyRoomLink = () => {
+  const copyRoomLink = (): void => {
     const url = `${window.location.origin}/room/${roomId}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
@@ -98,7 +103,7 @@ export function Room({ roomId, onLeaveRoom }) {
   }, [localStream, peerStreams, selectedStream]);
 
   // Toggle participants panel
-  const toggleParticipants = () => {
+  const toggleParticipants = (): void => {
     setShowParticipants(prev => !prev);
   };
 
@@ -274,16 +279,14 @@ export function Room({ roomId, onLeaveRoom }) {
                   >
                     <div className={`${selectedStream === userId ? 'bg-primary-200 text-primary-700' : 
                       localStream ? 'bg-primary-100 text-primary-700' : 'bg-secondary-100 text-secondary-600'} 
-                      w-8 h-8 rounded-full flex items-center justify-center`}
-                    >
-                      <User size={18} />
+                      w-8 h-8 rounded-full flex items-center justify-center`}>
+                      <span>You</span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-secondary-800">You</span>
                         {localStream && (
                           <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Video size={10} />
                             <span>Sharing</span>
                           </span>
                         )}
@@ -296,7 +299,7 @@ export function Room({ roomId, onLeaveRoom }) {
                   </button>
                   
                   {/* Other participants */}
-                  {peers.map((peerId) => (
+                  {peers.map((peerId: string) => (
                     <button 
                       key={peerId} 
                       onClick={() => peerStreams[peerId] ? selectStream(peerId) : null}
@@ -308,16 +311,14 @@ export function Room({ roomId, onLeaveRoom }) {
                     >
                       <div className={`${selectedStream === peerId ? 'bg-primary-200 text-primary-700' : 
                         peerStreams[peerId] ? 'bg-primary-100 text-primary-700' : 'bg-secondary-100 text-secondary-600'} 
-                        w-8 h-8 rounded-full flex items-center justify-center`}
-                      >
-                        <User size={18} />
+                        w-8 h-8 rounded-full flex items-center justify-center`}>
+                        <span>P</span>
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-secondary-800">Participant</span>
                           {peerStreams[peerId] && (
                             <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <Video size={10} />
                               <span>Sharing</span>
                             </span>
                           )}
@@ -355,4 +356,4 @@ export function Room({ roomId, onLeaveRoom }) {
       </div>
     </div>
   );
-} 
+}

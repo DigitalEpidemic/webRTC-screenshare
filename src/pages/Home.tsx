@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { Monitor, Eye, Copy, ArrowRight, RefreshCw } from 'lucide-react';
+import { Monitor, Copy, ArrowRight, RefreshCw } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
-export function Home({ onJoinRoom }) {
-  const [newRoomId, setNewRoomId] = useState('');
-  const [joinRoomId, setJoinRoomId] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState('');
+interface HomeProps {
+  onJoinRoom: (roomId: string) => void;
+}
+
+export function Home({ onJoinRoom }: HomeProps): React.ReactElement {
+  const [newRoomId, setNewRoomId] = useState<string>('');
+  const [joinRoomId, setJoinRoomId] = useState<string>('');
+  const [copied, setCopied] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
   // Generate a random room ID
-  const generateRoomId = () => {
+  const generateRoomId = (): string => {
     const id = uuidv4().substring(0, 8);
     setNewRoomId(id);
     setCopied(false);
@@ -17,7 +21,7 @@ export function Home({ onJoinRoom }) {
   };
 
   // Copy room link to clipboard
-  const copyToClipboard = () => {
+  const copyToClipboard = (): void => {
     const url = `${window.location.origin}/room/${newRoomId}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
@@ -25,13 +29,13 @@ export function Home({ onJoinRoom }) {
   };
 
   // Handle creating a new room
-  const handleCreateRoom = () => {
+  const handleCreateRoom = (): void => {
     const roomId = newRoomId || generateRoomId();
     onJoinRoom(roomId);
   };
 
   // Handle joining an existing room
-  const handleJoinRoom = () => {
+  const handleJoinRoom = (): void => {
     if (!joinRoomId) {
       setError('Please enter a room ID');
       return;

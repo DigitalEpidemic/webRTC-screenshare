@@ -1,23 +1,71 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 
-export function useWebRTC({ roomId }) {
-  const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [peers, setPeers] = useState([]);
-  const [peerStreams, setPeerStreams] = useState({});
-  const [localStream, setLocalStream] = useState(null);
-  const [selectedStream, setSelectedStream] = useState(null);
+interface UseWebRTCProps {
+  roomId: string;
+}
+
+interface PeerStreams {
+  [peerId: string]: MediaStream;
+}
+
+interface StreamSenders {
+  [peerId: string]: RTCRtpSender[];
+}
+
+interface PendingCandidates {
+  [peerId: string]: RTCIceCandidateInit[];
+}
+
+interface PeerConnections {
+  [peerId: string]: RTCPeerConnection;
+}
+
+interface SignalingMessage {
+  type?: string;
+  from: string;
+  target?: string;
+  offer?: RTCSessionDescriptionInit;
+  answer?: RTCSessionDescriptionInit;
+  ice?: RTCIceCandidateInit;
+}
+
+interface RoomInfo {
+  participants: string[];
+  roomId: string;
+}
+
+interface UseWebRTCResult {
+  isConnected: boolean;
+  isLoading: boolean;
+  error: string | null;
+  peers: string[];
+  localStream: MediaStream | null;
+  peerStreams: PeerStreams;
+  selectedStream: string | null;
+  selectStream: (streamOwnerId: string) => void;
+  shareScreen: () => Promise<MediaStream | null>;
+  stopSharing: () => void;
+  userId: string;
+}
+
+export function useWebRTC({ roomId }: UseWebRTCProps): UseWebRTCResult {
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [peers, setPeers] = useState<string[]>([]);
+  const [peerStreams, setPeerStreams] = useState<PeerStreams>({});
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [selectedStream, setSelectedStream] = useState<string | null>(null);
   
-  const socket = useRef(null);
-  const peerConnections = useRef({});
-  const localStreamRef = useRef(null);
-  const userId = useRef(uuidv4());
-  const isUnmounting = useRef(false);
-  const pendingCandidates = useRef({});
-  const streamSenders = useRef({});
+  const socket = useRef<Socket | null>(null);
+  const peerConnections = useRef<PeerConnections>({});
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const userId = useRef<string>(uuidv4());
+  const isUnmounting = useRef<boolean>(false);
+  const pendingCandidates = useRef<PendingCandidates>({});
+  const streamSenders = useRef<StreamSenders>({});
 
   // Connect to the signaling server
   const connectToSignalingServer = useCallback(() => {
@@ -50,28 +98,28 @@ export function useWebRTC({ roomId }) {
       
       // Handle connection events
       socket.current.on('connect', () => {
-        console.log('Connected to signaling server', socket.current.id);
+        console.log('Connected to signaling server', socket.current?.id);
         
         // Join the room
-        socket.current.emit('join', {
+        socket.current?.emit('join', {
           room: roomId,
           userId: userId.current
         });
       });
       
-      socket.current.on('connect_error', (err) => {
+      socket.current.on('connect_error', (err: Error) => {
         console.error('Connection error:', err);
         setError('Failed to connect to the signaling server: ' + err.message);
         setIsLoading(false);
       });
       
-      socket.current.on('disconnect', (reason) => {
+      socket.current.on('disconnect', (reason: string) => {
         console.log('Disconnected from signaling server:', reason);
         setIsConnected(false);
         
         if (reason === 'io server disconnect') {
           // The server has forcefully disconnected
-          socket.current.connect();
+          socket.current?.connect();
         }
       });
       
@@ -82,7 +130,7 @@ export function useWebRTC({ roomId }) {
       socket.current.on('signal', handleSignalingMessage);
 
       // Handle user disconnect
-      socket.current.on('user-left', (data) => {
+      socket.current.on('user-left', (data: { userId: string }) => {
         const { userId: leavingUserId } = data;
         console.log('User left:', leavingUserId);
         
@@ -114,7 +162,7 @@ export function useWebRTC({ roomId }) {
       });
       
       // Handle stream updates
-      socket.current.on('stream-update', (data) => {
+      socket.current.on('stream-update', (data: { userId: string, isStreaming: boolean }) => {
         const { userId: streamingUserId, isStreaming } = data;
         console.log(`Received stream update: ${streamingUserId} ${isStreaming ? 'started' : 'stopped'} streaming`);
         
@@ -136,13 +184,13 @@ export function useWebRTC({ roomId }) {
       
     } catch (error) {
       console.error('Error creating Socket.IO connection:', error);
-      setError('Failed to create connection: ' + error.message);
+      setError('Failed to create connection: ' + (error instanceof Error ? error.message : String(error)));
       setIsLoading(false);
     }
   }, [roomId]);
 
   // Handle room information
-  const handleRoomInfo = useCallback((roomInfo) => {
+  const handleRoomInfo = useCallback((roomInfo: RoomInfo) => {
     console.log('Room info:', roomInfo);
     const filteredPeers = roomInfo.participants.filter(id => id !== userId.current);
     setPeers(filteredPeers);
@@ -163,7 +211,7 @@ export function useWebRTC({ roomId }) {
   }, []);
 
   // Handle messages from the signaling server
-  const handleSignalingMessage = useCallback((message) => {
+  const handleSignalingMessage = useCallback((message: SignalingMessage) => {
     console.log('Received signal:', message.type || 'ice candidate', 'from', message.from);
     
     if (message.offer) {
@@ -178,7 +226,7 @@ export function useWebRTC({ roomId }) {
   }, []);
 
   // Add tracks to a peer connection
-  const addTracksToConnection = useCallback((pc, peerId) => {
+  const addTracksToConnection = useCallback((pc: RTCPeerConnection, peerId: string) => {
     if (!localStreamRef.current) return;
     
     console.log(`Adding tracks to connection with ${peerId}`);
@@ -191,13 +239,13 @@ export function useWebRTC({ roomId }) {
     // Add all tracks
     localStreamRef.current.getTracks().forEach(track => {
       console.log(`Adding ${track.kind} track to connection with ${peerId}`);
-      const sender = pc.addTrack(track, localStreamRef.current);
+      const sender = pc.addTrack(track, localStreamRef.current!);
       streamSenders.current[peerId].push(sender);
     });
   }, []);
   
   // Remove tracks from a peer connection
-  const removeTracksFromConnection = useCallback((peerId) => {
+  const removeTracksFromConnection = useCallback((peerId: string) => {
     const pc = peerConnections.current[peerId];
     if (!pc) return;
     
@@ -215,14 +263,11 @@ export function useWebRTC({ roomId }) {
   }, []);
 
   // Share screen
-  const shareScreen = useCallback(async () => {
+  const shareScreen = useCallback(async (): Promise<MediaStream | null> => {
     try {
       console.log('Requesting screen share');
       const stream = await navigator.mediaDevices.getDisplayMedia({ 
-        video: { 
-          cursor: 'always',
-          displaySurface: 'monitor'
-        },
+        video: true,
         audio: false // Audio often causes issues, set to true if needed
       });
       
@@ -260,7 +305,7 @@ export function useWebRTC({ roomId }) {
       return stream;
     } catch (error) {
       console.error('Error sharing screen:', error);
-      setError('Failed to share screen: ' + error.message);
+      setError('Failed to share screen: ' + (error instanceof Error ? error.message : String(error)));
       return null;
     }
   }, [roomId, removeTracksFromConnection, addTracksToConnection]);
@@ -295,7 +340,7 @@ export function useWebRTC({ roomId }) {
   }, [roomId, removeTracksFromConnection]);
 
   // Create a new peer connection
-  const createPeerConnection = useCallback((peerId, isInitiator) => {
+  const createPeerConnection = useCallback((peerId: string, isInitiator: boolean): RTCPeerConnection | null => {
     try {
       // Close existing connection if any
       if (peerConnections.current[peerId]) {
@@ -472,66 +517,74 @@ export function useWebRTC({ roomId }) {
       return pc;
     } catch (error) {
       console.error('Error creating peer connection:', error);
-      setError('Failed to create peer connection: ' + error.message);
+      setError('Failed to create peer connection: ' + (error instanceof Error ? error.message : String(error)));
       return null;
     }
   }, [addTracksToConnection]);
 
   // Handle incoming offer
-  const handleOffer = useCallback((message) => {
+  const handleOffer = useCallback((message: SignalingMessage) => {
     const peerId = message.from;
     console.log(`Received offer from ${peerId}, creating answer`);
     
     // Create a peer connection if it doesn't exist
     let pc = peerConnections.current[peerId];
     if (!pc) {
-      pc = createPeerConnection(peerId, false);
+      const newPc = createPeerConnection(peerId, false);
+      if (!newPc) {
+        console.error('Failed to create peer connection');
+        return;
+      }
+      pc = newPc;
     }
     
-    // Set the remote description
-    pc.setRemoteDescription(new RTCSessionDescription(message.offer))
-      .then(() => {
-        console.log('Remote description set, creating answer');
-        return pc.createAnswer();
-      })
-      .then(answer => {
-        console.log('Answer created, setting local description');
-        return pc.setLocalDescription(answer);
-      })
-      .then(() => {
-        // Send the answer back
-        console.log('Local description set, sending answer');
-        if (socket.current && socket.current.connected) {
-          socket.current.emit('signal', {
-            type: 'answer',
-            answer: pc.localDescription,
-            target: peerId,
-            from: userId.current
-          });
-        }
-        
-        // Apply any pending ICE candidates
-        if (pendingCandidates.current[peerId]) {
-          console.log(`Applying ${pendingCandidates.current[peerId].length} pending ICE candidates`);
-          pendingCandidates.current[peerId].forEach(candidate => {
-            pc.addIceCandidate(new RTCIceCandidate(candidate))
-              .catch(err => console.error('Error adding pending ICE candidate:', err));
-          });
-          pendingCandidates.current[peerId] = [];
-        }
-      })
-      .catch(error => {
-        console.error('Error handling offer:', error);
-        setError('Failed to handle connection offer: ' + error.message);
-      });
+    if (message.offer) {
+      // Set the remote description
+      pc.setRemoteDescription(new RTCSessionDescription(message.offer))
+        .then(() => {
+          console.log('Remote description set, creating answer');
+          return pc.createAnswer();
+        })
+        .then(answer => {
+          console.log('Answer created, setting local description');
+          return pc.setLocalDescription(answer);
+        })
+        .then(() => {
+          // Send the answer back
+          console.log('Local description set, sending answer');
+          
+          if (socket.current && socket.current.connected) {
+            socket.current.emit('signal', {
+              type: 'answer',
+              answer: pc.localDescription,
+              target: peerId,
+              from: userId.current
+            });
+          }
+          
+          // Apply any pending ICE candidates
+          if (pendingCandidates.current[peerId]) {
+            console.log(`Applying ${pendingCandidates.current[peerId].length} pending ICE candidates`);
+            pendingCandidates.current[peerId].forEach(candidate => {
+              pc.addIceCandidate(new RTCIceCandidate(candidate))
+                .catch(err => console.error('Error adding pending ICE candidate:', err));
+            });
+            pendingCandidates.current[peerId] = [];
+          }
+        })
+        .catch(error => {
+          console.error('Error handling offer:', error);
+          setError('Failed to handle connection offer: ' + (error instanceof Error ? error.message : String(error)));
+        });
+    }
   }, [createPeerConnection]);
 
   // Handle incoming answer
-  const handleAnswer = useCallback((message) => {
+  const handleAnswer = useCallback((message: SignalingMessage) => {
     const peerId = message.from;
     console.log(`Received answer from ${peerId}`);
     
-    if (peerConnections.current[peerId]) {
+    if (peerConnections.current[peerId] && message.answer) {
       console.log('Setting remote description from answer');
       peerConnections.current[peerId]
         .setRemoteDescription(new RTCSessionDescription(message.answer))
@@ -551,13 +604,13 @@ export function useWebRTC({ roomId }) {
         .catch(error => {
           console.error('Error handling answer:', error);
           // Try recreating the connection if we can't set the remote description
-          if (error.name === 'InvalidStateError') {
+          if (error instanceof Error && error.name === 'InvalidStateError') {
             console.log('Invalid state, recreating connection');
             setTimeout(() => {
               createPeerConnection(peerId, true);
             }, 1000);
           } else {
-            setError('Failed to handle connection answer: ' + error.message);
+            setError('Failed to handle connection answer: ' + (error instanceof Error ? error.message : String(error)));
           }
         });
     } else {
@@ -566,10 +619,10 @@ export function useWebRTC({ roomId }) {
   }, [createPeerConnection]);
 
   // Handle incoming ICE candidate
-  const handleIceCandidate = useCallback((message) => {
+  const handleIceCandidate = useCallback((message: SignalingMessage) => {
     const peerId = message.from;
     
-    if (peerConnections.current[peerId]) {
+    if (peerConnections.current[peerId] && message.ice) {
       const pc = peerConnections.current[peerId];
       
       // Only add candidates if we have a remote description
@@ -621,7 +674,7 @@ export function useWebRTC({ roomId }) {
   }, [roomId, connectToSignalingServer, stopSharing]);
 
   // Helper to select a stream to view
-  const selectStream = useCallback((streamOwnerId) => {
+  const selectStream = useCallback((streamOwnerId: string) => {
     setSelectedStream(streamOwnerId);
   }, []);
 
