@@ -72,7 +72,11 @@ io.on("connection", (socket) => {
     
     // Send room status to all participants
     const roomInfo = {
-      participants: Array.from(rooms.get(roomId).keys())
+      participants: Array.from(rooms.get(roomId).keys()),
+      roomId,
+      streamingUsers: Array.from(rooms.get(roomId).entries())
+        .filter(([_, userData]) => userData.isStreaming)
+        .map(([userId, _]) => userId)
     };
     
     io.to(roomId).emit("room-info", roomInfo);
@@ -158,7 +162,11 @@ io.on("connection", (socket) => {
           
           // Notify remaining participants
           const roomInfo = {
-            participants: Array.from(room.keys())
+            participants: Array.from(room.keys()),
+            roomId,
+            streamingUsers: Array.from(room.entries())
+              .filter(([_, userData]) => userData.isStreaming)
+              .map(([userId, _]) => userId)
           };
           
           io.to(roomId).emit("room-info", roomInfo);

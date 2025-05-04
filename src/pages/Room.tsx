@@ -41,9 +41,14 @@ export function Room({ roomId, onLeaveRoom }: RoomProps): React.ReactElement {
           console.log('Showing local stream');
         } 
         // If selected stream is from a peer
-        else if (peerStreams[selectedStream]) {
+        else if (selectedStream in peerStreams && peerStreams[selectedStream]) {
           streamToShow = peerStreams[selectedStream];
           console.log(`Showing peer stream from ${selectedStream}`);
+          
+          // Double-check the stream has video tracks
+          if (streamToShow && streamToShow.getVideoTracks().length === 0) {
+            console.warn(`Stream from ${selectedStream} has no video tracks`);
+          }
         }
       } 
       // Default: show our own stream if no selection
@@ -52,9 +57,18 @@ export function Room({ roomId, onLeaveRoom }: RoomProps): React.ReactElement {
         console.log('No selection, defaulting to local stream');
       }
       
-      // Apply the stream
+      // Apply the stream with additional checks
       if (streamToShow) {
-        console.log('Setting video stream', streamToShow.id);
+        console.log('Setting video stream', streamToShow.id, 'with tracks:', 
+          streamToShow.getTracks().map(t => `${t.kind}:${t.id}:${t.enabled ? 'enabled' : 'disabled'}`).join(', '));
+        
+        // Check if stream has any enabled video tracks
+        const hasEnabledVideo = streamToShow.getVideoTracks().some(track => track.enabled);
+        if (!hasEnabledVideo) {
+          console.warn(`Stream ${streamToShow.id} has no enabled video tracks`);
+        }
+        
+        // Set the stream
         videoRef.current.srcObject = streamToShow;
       } else {
         console.log('No stream to show');
@@ -91,16 +105,35 @@ export function Room({ roomId, onLeaveRoom }: RoomProps): React.ReactElement {
   };
 
   // Find active streamers (peers with streams + local user if sharing)
-  const activeStreamers = [...Object.keys(peerStreams), ...(localStream ? [userId] : [])];
+  const activeStreamers = [
+    ...Object.keys(peerStreams).filter(id => peerStreams[id] !== null),
+    ...(localStream ? [userId] : [])
+  ];
 
-  // Debug: log streams for troubleshooting
+  // Debug: log streams for troubleshooting with more detailed information
   useEffect(() => {
     console.log('Active streams:', {
       localStream: localStream ? 'yes' : 'no',
       peerStreams: Object.keys(peerStreams),
+      peerStreamsWithData: Object.entries(peerStreams).map(([id, stream]) => ({
+        id,
+        hasStream: !!stream,
+        trackCount: stream ? (stream as MediaStream).getTracks().length : 0,
+        videoTracks: stream ? (stream as MediaStream).getVideoTracks().length : 0
+      })),
       selected: selectedStream
     });
-  }, [localStream, peerStreams, selectedStream]);
+
+    // Log all participants for clarity
+    console.log('All participants:', [
+      { id: userId, isMe: true, isSharing: !!localStream },
+      ...peers.map((peerId: string) => ({ 
+        id: peerId, 
+        isMe: false, 
+        isSharing: peerId in peerStreams && peerStreams[peerId] !== null
+      }))
+    ]);
+  }, [localStream, peerStreams, selectedStream, peers, userId]);
 
   // Toggle participants panel
   const toggleParticipants = (): void => {
@@ -188,7 +221,12 @@ export function Room({ roomId, onLeaveRoom }: RoomProps): React.ReactElement {
                 ref={videoContainerRef}
                 className="bg-secondary-900 aspect-video flex items-center justify-center relative"
               >
-                {(selectedStream && (peerStreams[selectedStream] || (selectedStream === userId && localStream))) || localStream ? (
+                {(selectedStream && (
+                  // Our own stream
+                  (selectedStream === userId && localStream) || 
+                  // Peer's stream with actual media (not null)
+                  (selectedStream in peerStreams && peerStreams[selectedStream] !== null)
+                )) || localStream ? (
                   <video
                     ref={videoRef}
                     autoPlay
@@ -196,6 +234,34 @@ export function Room({ roomId, onLeaveRoom }: RoomProps): React.ReactElement {
                     controls
                     className="w-full h-full object-contain"
                   />
+                ) : selectedStream && selectedStream in peerStreams && peerStreams[selectedStream] === null ? (
+                  // Peer is sharing but we haven't received their stream yet
+                  <div className="text-center text-secondary-400 p-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                    <p className="mb-2">Connecting to peer's stream...</p>
+                    <p className="text-sm text-secondary-500">This may take a moment</p>
+                    <button 
+                      onClick={() => {
+                        // Try to manually request the peer's stream
+                        console.log("Manually requesting stream from", selectedStream);
+                        
+                        // Try reselecting the stream
+                        if (selectedStream) {
+                          selectStream(selectedStream);
+                        }
+                        
+                        // This implementation doesn't directly access socket but triggers a reconnection attempt
+                        setTimeout(() => {
+                          if (selectedStream) {
+                            selectStream(selectedStream);
+                          }
+                        }, 1000);
+                      }}
+                      className="mt-4 px-3 py-1 bg-primary-600 text-white rounded-md hover:bg-primary-700 text-sm"
+                    >
+                      Retry Connection
+                    </button>
+                  </div>
                 ) : (
                   <div className="text-center text-secondary-400 p-8">
                     <div>
@@ -302,30 +368,34 @@ export function Room({ roomId, onLeaveRoom }: RoomProps): React.ReactElement {
                   {peers.map((peerId: string) => (
                     <button 
                       key={peerId} 
-                      onClick={() => peerStreams[peerId] ? selectStream(peerId) : null}
-                      disabled={!peerStreams[peerId]}
+                      onClick={() => peerId in peerStreams ? selectStream(peerId) : null}
+                      disabled={!(peerId in peerStreams)}
                       className={`w-full text-left p-2 rounded-md 
                         ${selectedStream === peerId ? 'bg-primary-100' : 
-                          peerStreams[peerId] ? 'hover:bg-primary-50' : 'hover:bg-secondary-50'} 
+                          peerId in peerStreams ? 'hover:bg-primary-50' : 'hover:bg-secondary-50'} 
                         flex items-center gap-3 transition-colors`}
                     >
                       <div className={`${selectedStream === peerId ? 'bg-primary-200 text-primary-700' : 
-                        peerStreams[peerId] ? 'bg-primary-100 text-primary-700' : 'bg-secondary-100 text-secondary-600'} 
+                        peerId in peerStreams ? 'bg-primary-100 text-primary-700' : 'bg-secondary-100 text-secondary-600'} 
                         w-8 h-8 rounded-full flex items-center justify-center`}>
                         <span>P</span>
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-secondary-800">Participant</span>
-                          {peerStreams[peerId] && (
+                          {peerId in peerStreams && (
                             <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <span>Sharing</span>
+                              <span>
+                                {peerStreams[peerId] ? 
+                                  `Sharing${peerStreams[peerId]?.getVideoTracks().length ? '' : ' (no video)'}` : 
+                                  'Starting stream...'}
+                              </span>
                             </span>
                           )}
                         </div>
                         <div className="text-xs text-secondary-500">{peerId.substring(0, 8)}</div>
                       </div>
-                      {peerStreams[peerId] && selectedStream !== peerId && (
+                      {peerId in peerStreams && selectedStream !== peerId && (
                         <div className="text-xs text-primary-600">View</div>
                       )}
                     </button>
