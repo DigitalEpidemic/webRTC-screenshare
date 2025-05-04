@@ -179,21 +179,6 @@ export function Room({ roomId, onLeaveRoom }) {
                     </div>
                   </div>
                 )}
-                
-                {/* Controls overlay */}
-                {isSharingScreen && (
-                  <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                    <div className="bg-secondary-900/70 rounded-full p-2 backdrop-blur-sm">
-                      <button
-                        onClick={handleShareScreen}
-                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full flex items-center gap-2"
-                      >
-                        <X size={16} />
-                        <span>Stop Sharing</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
               
               {/* Status bar */}
