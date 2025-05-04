@@ -13,6 +13,7 @@ export function Home({ onJoinRoom }) {
     const id = uuidv4().substring(0, 8);
     setNewRoomId(id);
     setCopied(false);
+    return id;
   };
 
   // Copy room link to clipboard
@@ -24,12 +25,9 @@ export function Home({ onJoinRoom }) {
   };
 
   // Handle creating a new room
-  const handleCreateRoom = (role) => {
-    if (!newRoomId) {
-      generateRoomId();
-      return;
-    }
-    onJoinRoom(newRoomId, role);
+  const handleCreateRoom = () => {
+    const roomId = newRoomId || generateRoomId();
+    onJoinRoom(roomId, 'sharer');
   };
 
   // Handle joining an existing room
@@ -53,6 +51,7 @@ export function Home({ onJoinRoom }) {
         {/* Create Room Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 border border-secondary-200">
           <h2 className="text-2xl font-semibold text-primary-800 mb-4">Create a Room</h2>
+          <p className="text-secondary-600 mb-6">Create a new room and share your screen</p>
           
           <div className="flex items-center gap-2 mb-6">
             <input
@@ -88,22 +87,13 @@ export function Home({ onJoinRoom }) {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => handleCreateRoom('sharer')}
-              className="flex items-center justify-center gap-2 bg-primary-600 text-white p-3 rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              <Monitor size={20} />
-              <span>Share Screen</span>
-            </button>
-            <button
-              onClick={() => handleCreateRoom('viewer')}
-              className="flex items-center justify-center gap-2 bg-secondary-600 text-white p-3 rounded-lg hover:bg-secondary-700 transition-colors"
-            >
-              <Eye size={20} />
-              <span>Join as Viewer</span>
-            </button>
-          </div>
+          <button
+            onClick={handleCreateRoom}
+            className="w-full flex items-center justify-center gap-2 bg-primary-600 text-white p-3 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Monitor size={20} />
+            <span>Create Room & Share Screen</span>
+          </button>
         </div>
 
         {/* Join Room Section */}
@@ -124,10 +114,10 @@ export function Home({ onJoinRoom }) {
 
           <button
             onClick={handleJoinRoom}
-            className="w-full flex items-center justify-center gap-2 bg-primary-600 text-white p-3 rounded-lg hover:bg-primary-700 transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-secondary-600 text-white p-3 rounded-lg hover:bg-secondary-700 transition-colors"
           >
-            <ArrowRight size={20} />
-            <span>Join Room</span>
+            <Eye size={20} />
+            <span>Join Room as Viewer</span>
           </button>
         </div>
       </div>
