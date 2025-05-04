@@ -244,12 +244,7 @@ export function useWebRTC({ roomId }: UseWebRTCProps): UseWebRTCResult {
                 const pc = new RTCPeerConnection({
                   iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { 
-                      urls: 'turn:numb.viagenie.ca',
-                      username: 'webrtc@live.com',
-                      credential: 'muazkh'
-                    }
+                    { urls: 'stun:stun1.l.google.com:19302' }
                   ],
                   iceCandidatePoolSize: 10
                 });
