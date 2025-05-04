@@ -5,6 +5,7 @@ import { useWebRTC } from '../hooks/useWebRTC';
 export function Room({ roomId, onLeaveRoom }) {
   const [copied, setCopied] = useState(false);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(false);
   const videoRef = useRef(null);
   const videoContainerRef = useRef(null);
   
@@ -96,6 +97,11 @@ export function Room({ roomId, onLeaveRoom }) {
     });
   }, [localStream, peerStreams, selectedStream]);
 
+  // Toggle participants panel
+  const toggleParticipants = () => {
+    setShowParticipants(prev => !prev);
+  };
+
   return (
     <div className="min-h-screen bg-secondary-50 flex flex-col">
       {/* Header */}
@@ -109,17 +115,32 @@ export function Room({ roomId, onLeaveRoom }) {
             <span>Leave Room</span>
           </button>
           
-          <div className="flex items-center">
-            <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-l-md">
-              Room ID: {roomId}
-            </span>
-            <button 
-              onClick={copyRoomLink}
-              className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-1 rounded-r-md flex items-center gap-1"
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleParticipants}
+              className={`${showParticipants ? 'bg-primary-600 text-white' : 'bg-secondary-100 text-secondary-700'} hover:bg-primary-700 hover:text-white px-3 py-1 rounded-md flex items-center gap-1 transition-colors`}
             >
-              <Copy size={14} />
-              <span>{copied ? 'Copied!' : 'Copy Link'}</span>
+              <Users size={16} />
+              <span>Participants ({peers.length + 1})</span>
+              {activeStreamers.length > 0 && (
+                <span className="ml-1 bg-primary-200 text-primary-800 text-xs px-1.5 py-0.5 rounded-full">
+                  {activeStreamers.length} sharing
+                </span>
+              )}
             </button>
+            
+            <div className="flex items-center">
+              <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-l-md">
+                Room ID: {roomId}
+              </span>
+              <button 
+                onClick={copyRoomLink}
+                className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-1 rounded-r-md flex items-center gap-1"
+              >
+                <Copy size={14} />
+                <span>{copied ? 'Copied!' : 'Copy Link'}</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -155,9 +176,9 @@ export function Room({ roomId, onLeaveRoom }) {
 
         {/* Connected State */}
         {isConnected && !isLoading && !error && (
-          <div className="flex-1 flex flex-col md:flex-row gap-4">
+          <div className="flex-1 flex gap-4 relative">
             {/* Main Content - Video */}
-            <div className="flex-1 bg-white rounded-xl overflow-hidden shadow-md">
+            <div className={`flex-1 bg-white rounded-xl overflow-hidden shadow-md transition-all duration-300 ${showParticipants ? 'mr-80' : ''}`}>
               <div 
                 ref={videoContainerRef}
                 className="bg-secondary-900 aspect-video flex items-center justify-center relative"
@@ -219,26 +240,25 @@ export function Room({ roomId, onLeaveRoom }) {
               </div>
             </div>
             
-            {/* Sidebar - Participants */}
-            <div className="w-full md:w-80 bg-white rounded-xl shadow-md overflow-hidden flex flex-col">
+            {/* Participants Panel - Slide in from right */}
+            <div 
+              className={`fixed top-[73px] right-0 bottom-0 w-80 bg-white shadow-lg overflow-hidden flex flex-col transition-all duration-300 transform ${
+                showParticipants ? 'translate-x-0' : 'translate-x-full'
+              } z-10`}
+            >
               <div className="p-4 border-b border-secondary-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users size={18} className="text-secondary-600" />
-                  <h2 className="font-medium">Participants ({peers.length + 1})</h2>
+                  <h2 className="font-medium">Participants</h2>
                 </div>
                 
-                <div className="flex items-center">
-                  <span className="text-xs text-secondary-500 mr-2">
-                    {activeStreamers.length} sharing
-                  </span>
-                  <button 
-                    onClick={copyRoomLink}
-                    className="text-primary-600 hover:text-primary-800 flex items-center gap-1 text-sm"
-                  >
-                    <UserPlus size={14} />
-                    <span>Invite</span>
-                  </button>
-                </div>
+                <button
+                  onClick={toggleParticipants}
+                  className="text-secondary-400 hover:text-secondary-700 p-1 rounded-full hover:bg-secondary-100"
+                  aria-label="Close panel"
+                >
+                  <X size={18} />
+                </button>
               </div>
               
               <div className="flex-1 overflow-auto p-2">
