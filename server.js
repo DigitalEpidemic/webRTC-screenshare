@@ -45,15 +45,13 @@ io.on("connection", (socket) => {
   console.log(`New connection: ${socket.id}`);
   let roomId = null;
   let userId = null;
-  let userRole = null;
 
   // Join room event
   socket.on("join", (data) => {
     roomId = data.room;
     userId = data.userId;
-    userRole = data.role;
     
-    console.log(`User ${userId} (${socket.id}) joining room ${roomId} as ${userRole}`);
+    console.log(`User ${userId} (${socket.id}) joining room ${roomId}`);
     
     // Create room if it doesn't exist
     if (!rooms.has(roomId)) {
@@ -64,7 +62,7 @@ io.on("connection", (socket) => {
     // Add user to room
     rooms.get(roomId).set(userId, {
       socketId: socket.id,
-      role: userRole, // 'sharer' or 'viewer'
+      isStreaming: false
     });
     
     // Join Socket.IO room
@@ -74,8 +72,7 @@ io.on("connection", (socket) => {
     
     // Send room status to all participants
     const roomInfo = {
-      participants: Array.from(rooms.get(roomId).keys()),
-      hasSharer: Array.from(rooms.get(roomId).values()).some(p => p.role === 'sharer')
+      participants: Array.from(rooms.get(roomId).keys())
     };
     
     io.to(roomId).emit("room-info", roomInfo);
@@ -85,7 +82,7 @@ io.on("connection", (socket) => {
   socket.on("signal", (data) => {
     if (!roomId || !userId) return;
     
-    console.log(`Signal from ${userId} to ${data.target || 'all'}`);
+    console.log(`Signal ${data.type || 'ice'} from ${userId} to ${data.target || 'all'}`);
     
     if (data.target) {
       // Get target socket ID
@@ -101,6 +98,42 @@ io.on("connection", (socket) => {
       socket.to(roomId).emit("signal", {
         ...data,
         from: userId
+      });
+    }
+  });
+
+  // Handle stream start
+  socket.on("stream-started", (data) => {
+    if (!roomId || !userId) return;
+    
+    console.log(`User ${userId} started streaming in room ${roomId}`);
+    
+    const room = rooms.get(roomId);
+    if (room && room.has(userId)) {
+      room.get(userId).isStreaming = true;
+      
+      // Notify room about stream change
+      socket.to(roomId).emit("stream-update", {
+        userId: userId,
+        isStreaming: true
+      });
+    }
+  });
+  
+  // Handle stream stop
+  socket.on("stream-stopped", (data) => {
+    if (!roomId || !userId) return;
+    
+    console.log(`User ${userId} stopped streaming in room ${roomId}`);
+    
+    const room = rooms.get(roomId);
+    if (room && room.has(userId)) {
+      room.get(userId).isStreaming = false;
+      
+      // Notify room about stream change
+      socket.to(roomId).emit("stream-update", {
+        userId: userId,
+        isStreaming: false
       });
     }
   });
@@ -125,11 +158,13 @@ io.on("connection", (socket) => {
           
           // Notify remaining participants
           const roomInfo = {
-            participants: Array.from(room.keys()),
-            hasSharer: Array.from(room.values()).some(p => p.role === 'sharer')
+            participants: Array.from(room.keys())
           };
           
           io.to(roomId).emit("room-info", roomInfo);
+          
+          // Send user-left event to handle WebRTC cleanup
+          io.to(roomId).emit("user-left", { userId: userId });
         }
       }
     }
@@ -141,7 +176,7 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001; // Change to port 3001 to avoid conflicts
 server.listen(PORT, () =>
   console.log(`Server running at http://localhost:${PORT}`)
 );

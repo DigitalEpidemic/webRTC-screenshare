@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Monitor, User, Copy, X, UserPlus, Users, ArrowLeft } from 'lucide-react';
+import { Monitor, User, Copy, X, UserPlus, Users, ArrowLeft, Video, VideoOff } from 'lucide-react';
 import { useWebRTC } from '../hooks/useWebRTC';
 
-export function Room({ roomId, role, onLeaveRoom }) {
+export function Room({ roomId, onLeaveRoom }) {
   const [copied, setCopied] = useState(false);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
   const videoRef = useRef(null);
@@ -12,18 +12,49 @@ export function Room({ roomId, role, onLeaveRoom }) {
     isLoading,
     error,
     peers,
-    stream,
+    localStream,
+    peerStreams,
+    selectedStream,
+    selectStream,
     shareScreen,
     stopSharing,
     userId
-  } = useWebRTC({ roomId, role });
+  } = useWebRTC({ roomId });
 
   // Set the video stream
   useEffect(() => {
-    if (stream && videoRef.current) {
-      videoRef.current.srcObject = stream;
+    if (videoRef.current) {
+      let streamToShow = null;
+      
+      // Determine which stream to show
+      if (selectedStream) {
+        // If selected stream is our own
+        if (selectedStream === userId && localStream) {
+          streamToShow = localStream;
+          console.log('Showing local stream');
+        } 
+        // If selected stream is from a peer
+        else if (peerStreams[selectedStream]) {
+          streamToShow = peerStreams[selectedStream];
+          console.log(`Showing peer stream from ${selectedStream}`);
+        }
+      } 
+      // Default: show our own stream if no selection
+      else if (localStream) {
+        streamToShow = localStream;
+        console.log('No selection, defaulting to local stream');
+      }
+      
+      // Apply the stream
+      if (streamToShow) {
+        console.log('Setting video stream', streamToShow.id);
+        videoRef.current.srcObject = streamToShow;
+      } else {
+        console.log('No stream to show');
+        videoRef.current.srcObject = null;
+      }
     }
-  }, [stream]);
+  }, [localStream, peerStreams, selectedStream, userId]);
 
   // Handle screen sharing
   const handleShareScreen = async () => {
@@ -31,8 +62,16 @@ export function Room({ roomId, role, onLeaveRoom }) {
       stopSharing();
       setIsSharingScreen(false);
     } else {
-      const result = await shareScreen();
-      setIsSharingScreen(!!result);
+      try {
+        const result = await shareScreen();
+        if (result) {
+          setIsSharingScreen(true);
+          // Auto-select our own stream
+          selectStream(userId);
+        }
+      } catch (err) {
+        console.error('Error sharing screen:', err);
+      }
     }
   };
 
@@ -43,6 +82,18 @@ export function Room({ roomId, role, onLeaveRoom }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Find active streamers (peers with streams + local user if sharing)
+  const activeStreamers = [...Object.keys(peerStreams), ...(localStream ? [userId] : [])];
+
+  // Debug: log streams for troubleshooting
+  useEffect(() => {
+    console.log('Active streams:', {
+      localStream: localStream ? 'yes' : 'no',
+      peerStreams: Object.keys(peerStreams),
+      selected: selectedStream
+    });
+  }, [localStream, peerStreams, selectedStream]);
 
   return (
     <div className="min-h-screen bg-secondary-50 flex flex-col">
@@ -107,7 +158,7 @@ export function Room({ roomId, role, onLeaveRoom }) {
             {/* Main Content - Video */}
             <div className="flex-1 bg-white rounded-xl overflow-hidden shadow-md">
               <div className="bg-secondary-900 aspect-video flex items-center justify-center relative">
-                {stream ? (
+                {(selectedStream && (peerStreams[selectedStream] || (selectedStream === userId && localStream))) || localStream ? (
                   <video
                     ref={videoRef}
                     autoPlay
@@ -116,28 +167,21 @@ export function Room({ roomId, role, onLeaveRoom }) {
                   />
                 ) : (
                   <div className="text-center text-secondary-400 p-8">
-                    {role === 'sharer' ? (
-                      <div>
-                        <Monitor size={48} className="mx-auto mb-4 text-secondary-300" />
-                        <p className="mb-4">You haven't started sharing your screen yet</p>
-                        <button
-                          onClick={handleShareScreen}
-                          className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md"
-                        >
-                          Start Sharing
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <Monitor size={48} className="mx-auto mb-4 text-secondary-300" />
-                        <p>Waiting for someone to share their screen...</p>
-                      </div>
-                    )}
+                    <div>
+                      <Monitor size={48} className="mx-auto mb-4 text-secondary-300" />
+                      <p className="mb-4">No active screen shares</p>
+                      <button
+                        onClick={handleShareScreen}
+                        className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md"
+                      >
+                        Share Your Screen
+                      </button>
+                    </div>
                   </div>
                 )}
                 
                 {/* Controls overlay */}
-                {role === 'sharer' && stream && (
+                {isSharingScreen && (
                   <div className="absolute bottom-4 left-0 right-0 flex justify-center">
                     <div className="bg-secondary-900/70 rounded-full p-2 backdrop-blur-sm">
                       <button
@@ -155,21 +199,31 @@ export function Room({ roomId, role, onLeaveRoom }) {
               {/* Status bar */}
               <div className="p-4 border-t border-secondary-100 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${stream ? 'bg-green-500' : 'bg-secondary-300'}`}></div>
+                  <div className={`w-3 h-3 rounded-full ${activeStreamers.length > 0 ? 'bg-green-500' : 'bg-secondary-300'}`}></div>
                   <span className="text-secondary-700">
-                    {role === 'sharer' 
-                      ? (stream ? 'You are sharing your screen' : 'Not sharing') 
-                      : (stream ? 'Viewing shared screen' : 'Waiting for screen share')}
+                    {selectedStream 
+                      ? `Viewing: ${selectedStream === userId ? 'Your screen' : `Participant ${selectedStream.substring(0, 8)}`}` 
+                      : activeStreamers.length > 0 
+                        ? 'Select a participant to view their screen' 
+                        : 'No active screen shares'}
                   </span>
                 </div>
                 
-                {role === 'sharer' && !stream && (
+                {!isSharingScreen ? (
                   <button
                     onClick={handleShareScreen}
                     className="bg-primary-600 hover:bg-primary-700 text-white px-3 py-1 rounded-md flex items-center gap-1 text-sm"
                   >
                     <Monitor size={14} />
                     <span>Share Screen</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleShareScreen}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md flex items-center gap-1 text-sm"
+                  >
+                    <VideoOff size={14} />
+                    <span>Stop Sharing</span>
                   </button>
                 )}
               </div>
@@ -183,46 +237,87 @@ export function Room({ roomId, role, onLeaveRoom }) {
                   <h2 className="font-medium">Participants ({peers.length + 1})</h2>
                 </div>
                 
-                <button 
-                  onClick={copyRoomLink}
-                  className="text-primary-600 hover:text-primary-800 flex items-center gap-1 text-sm"
-                >
-                  <UserPlus size={14} />
-                  <span>Invite</span>
-                </button>
+                <div className="flex items-center">
+                  <span className="text-xs text-secondary-500 mr-2">
+                    {activeStreamers.length} sharing
+                  </span>
+                  <button 
+                    onClick={copyRoomLink}
+                    className="text-primary-600 hover:text-primary-800 flex items-center gap-1 text-sm"
+                  >
+                    <UserPlus size={14} />
+                    <span>Invite</span>
+                  </button>
+                </div>
               </div>
               
               <div className="flex-1 overflow-auto p-2">
                 <div className="space-y-1">
                   {/* Current user */}
-                  <div className="p-2 rounded-md bg-primary-50 flex items-center gap-3">
-                    <div className="bg-primary-100 text-primary-700 w-8 h-8 rounded-full flex items-center justify-center">
+                  <button 
+                    onClick={() => localStream ? selectStream(userId) : null}
+                    disabled={!localStream}
+                    className={`w-full text-left p-2 rounded-md 
+                      ${selectedStream === userId ? 'bg-primary-100' : 
+                        localStream ? 'bg-primary-50 hover:bg-primary-50' : 'bg-secondary-50'} 
+                      flex items-center gap-3 transition-colors`}
+                  >
+                    <div className={`${selectedStream === userId ? 'bg-primary-200 text-primary-700' : 
+                      localStream ? 'bg-primary-100 text-primary-700' : 'bg-secondary-100 text-secondary-600'} 
+                      w-8 h-8 rounded-full flex items-center justify-center`}
+                    >
                       <User size={18} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-secondary-800">You</span>
-                        <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
-                          {role === 'sharer' ? 'Sharer' : 'Viewer'}
-                        </span>
+                        {localStream && (
+                          <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Video size={10} />
+                            <span>Sharing</span>
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-secondary-500">{userId.substring(0, 8)}</div>
                     </div>
-                  </div>
+                    {localStream && selectedStream !== userId && (
+                      <div className="text-xs text-primary-600">View</div>
+                    )}
+                  </button>
                   
                   {/* Other participants */}
                   {peers.map((peerId) => (
-                    <div key={peerId} className="p-2 rounded-md hover:bg-secondary-50 flex items-center gap-3">
-                      <div className="bg-secondary-100 text-secondary-600 w-8 h-8 rounded-full flex items-center justify-center">
+                    <button 
+                      key={peerId} 
+                      onClick={() => peerStreams[peerId] ? selectStream(peerId) : null}
+                      disabled={!peerStreams[peerId]}
+                      className={`w-full text-left p-2 rounded-md 
+                        ${selectedStream === peerId ? 'bg-primary-100' : 
+                          peerStreams[peerId] ? 'hover:bg-primary-50' : 'hover:bg-secondary-50'} 
+                        flex items-center gap-3 transition-colors`}
+                    >
+                      <div className={`${selectedStream === peerId ? 'bg-primary-200 text-primary-700' : 
+                        peerStreams[peerId] ? 'bg-primary-100 text-primary-700' : 'bg-secondary-100 text-secondary-600'} 
+                        w-8 h-8 rounded-full flex items-center justify-center`}
+                      >
                         <User size={18} />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-secondary-800">Participant</span>
+                          {peerStreams[peerId] && (
+                            <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Video size={10} />
+                              <span>Sharing</span>
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-secondary-500">{peerId.substring(0, 8)}</div>
                       </div>
-                    </div>
+                      {peerStreams[peerId] && selectedStream !== peerId && (
+                        <div className="text-xs text-primary-600">View</div>
+                      )}
+                    </button>
                   ))}
                 </div>
               </div>

@@ -27,7 +27,7 @@ export function Home({ onJoinRoom }) {
   // Handle creating a new room
   const handleCreateRoom = () => {
     const roomId = newRoomId || generateRoomId();
-    onJoinRoom(roomId, 'sharer');
+    onJoinRoom(roomId);
   };
 
   // Handle joining an existing room
@@ -37,21 +37,21 @@ export function Home({ onJoinRoom }) {
       return;
     }
     setError('');
-    onJoinRoom(joinRoomId, 'viewer');
+    onJoinRoom(joinRoomId);
   };
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-12">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-primary-900 mb-2">Screen Share</h1>
-        <p className="text-secondary-600 text-lg">Create or join a room to start screen sharing</p>
+        <p className="text-secondary-600 text-lg">Create or join a room to collaborate with screen sharing</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Create Room Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 border border-secondary-200">
           <h2 className="text-2xl font-semibold text-primary-800 mb-4">Create a Room</h2>
-          <p className="text-secondary-600 mb-6">Create a new room and share your screen</p>
+          <p className="text-secondary-600 mb-6">Create a new room and invite others to join</p>
           
           <div className="flex items-center gap-2 mb-6">
             <input
@@ -92,14 +92,14 @@ export function Home({ onJoinRoom }) {
             className="w-full flex items-center justify-center gap-2 bg-primary-600 text-white p-3 rounded-lg hover:bg-primary-700 transition-colors"
           >
             <Monitor size={20} />
-            <span>Create Room & Share Screen</span>
+            <span>Create Room</span>
           </button>
         </div>
 
         {/* Join Room Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 border border-secondary-200">
           <h2 className="text-2xl font-semibold text-primary-800 mb-4">Join a Room</h2>
-          <p className="text-secondary-600 mb-6">Enter a room ID to join as a viewer</p>
+          <p className="text-secondary-600 mb-6">Enter a room ID to join an existing room</p>
           
           <div className="mb-6">
             <input
@@ -116,8 +116,8 @@ export function Home({ onJoinRoom }) {
             onClick={handleJoinRoom}
             className="w-full flex items-center justify-center gap-2 bg-secondary-600 text-white p-3 rounded-lg hover:bg-secondary-700 transition-colors"
           >
-            <Eye size={20} />
-            <span>Join Room as Viewer</span>
+            <ArrowRight size={20} />
+            <span>Join Room</span>
           </button>
         </div>
       </div>
@@ -126,16 +126,16 @@ export function Home({ onJoinRoom }) {
         <h2 className="text-xl font-semibold text-primary-800 mb-4">How It Works</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
           <div className="bg-white p-4 rounded-lg">
-            <h3 className="font-medium mb-2 text-primary-700">1. Create a Room</h3>
-            <p className="text-secondary-600">Create a new room and share the link with others</p>
+            <h3 className="font-medium mb-2 text-primary-700">1. Create or Join a Room</h3>
+            <p className="text-secondary-600">Create a new room or join with a room ID</p>
           </div>
           <div className="bg-white p-4 rounded-lg">
-            <h3 className="font-medium mb-2 text-primary-700">2. Join as Sharer or Viewer</h3>
-            <p className="text-secondary-600">One person shares their screen, others join to view</p>
+            <h3 className="font-medium mb-2 text-primary-700">2. Share Your Screen</h3>
+            <p className="text-secondary-600">Anyone in the room can share their screen</p>
           </div>
           <div className="bg-white p-4 rounded-lg">
-            <h3 className="font-medium mb-2 text-primary-700">3. Secure Connection</h3>
-            <p className="text-secondary-600">WebRTC provides direct peer-to-peer encrypted connection</p>
+            <h3 className="font-medium mb-2 text-primary-700">3. View Any Participant's Screen</h3>
+            <p className="text-secondary-600">Click on participants to view their shared screens</p>
           </div>
         </div>
       </div>
