@@ -145,7 +145,7 @@ export function Room({ roomId, onLeaveRoom }) {
         </div>
       </header>
 
-      <div className="container mx-auto p-4 flex-1 flex flex-col">
+      <div className="container mx-auto flex-1 flex flex-col">
         {/* Loading and Error States */}
         {isLoading && (
           <div className="flex-1 flex items-center justify-center">
@@ -208,7 +208,7 @@ export function Room({ roomId, onLeaveRoom }) {
               </div>
               
               {/* Status bar */}
-              <div className="p-4 border-t border-secondary-100 flex justify-between items-center">
+              <div className="px-4 py-1 border-t border-secondary-100 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <div className={`w-3 h-3 rounded-full ${activeStreamers.length > 0 ? 'bg-green-500' : 'bg-secondary-300'}`}></div>
                   <span className="text-secondary-700">
