@@ -1,21 +1,23 @@
 # Screen Share Application
 
-A modern, responsive WebRTC screen sharing application with room creation and management.
+A modern WebRTC-based screen sharing application that allows real-time collaboration through secure peer-to-peer connections.
 
 ## Features
 
-- **Room Creation & Management**: Create and join rooms with unique IDs
-- **Screen Sharing**: Share your screen with multiple viewers
-- **Real-time Communication**: Uses WebRTC for secure, peer-to-peer connections
-- **Modern UI**: Beautiful, responsive interface built with React and Tailwind CSS
+- **Room Creation & Joining**: Create rooms with auto-generated or custom IDs, or join existing rooms
+- **Real-time Screen Sharing**: Share your screen with all participants in the room
+- **Multi-participant Support**: Multiple users can join the same room
+- **Stream Selection**: View any participant's shared screen by selecting them from the participants panel
+- **Responsive Design**: Works across various screen sizes with a clean, modern interface
 
 ## Technology Stack
 
-- **Frontend**: React, Tailwind CSS, Lucide Icons
-- **Backend**: Node.js, Express
-- **WebRTC**: Simple-peer
-- **WebSockets**: ws (WebSocket implementation)
-- **Build Tools**: Vite, PostCSS
+- **Frontend**: React with functional components and hooks
+- **UI Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **WebRTC**: Native WebRTC API for peer connections
+- **Signaling**: Socket.IO for WebRTC signaling
+- **UUID Generation**: uuid for room ID creation
 
 ## Getting Started
 
@@ -47,27 +49,50 @@ A modern, responsive WebRTC screen sharing application with room creation and ma
 
 ## Usage
 
-1. **Create a Room**:
-   - On the home page, click the "Generate" button to create a room ID or enter a custom one
-   - Click "Share Screen" to create a room and start sharing your screen
-   - Or click "Join as Viewer" to create a room and wait for someone to share
+1. **Creating a Room**:
+   - Visit the home page
+   - Use the auto-generated room ID or enter a custom one
+   - Click "Create Room" to start a new session
+   - Share the generated room link with others you want to invite
 
-2. **Join a Room**:
-   - Enter an existing room ID and click "Join Room"
-   - Or use a shared room link
+2. **Joining a Room**:
+   - Enter a room ID in the "Join a Room" section
+   - Click "Join Room" to enter an existing session
+   - Alternatively, use a shared room link
 
-3. **Share Your Screen**:
-   - In a room, click the "Share Screen" button
-   - Select the screen or application window you want to share
-   - Click "Stop Sharing" when you're done
+3. **Sharing Your Screen**:
+   - Once in a room, click the "Share Screen" button at the bottom of the video area
+   - Select which screen/window/tab you want to share in the browser dialog
+   - To stop sharing, click "Stop Sharing" or end the share from your browser's UI
 
-4. **View a Shared Screen**:
-   - Join a room where someone is already sharing their screen
-   - The shared screen will automatically display
+4. **Viewing Shared Screens**:
+   - Open the "Participants" panel to see who is sharing their screen
+   - Click on any participant who is sharing to view their screen
+   - You can switch between different shared screens at any time
+
+5. **Leaving a Room**:
+   - Click "Leave Room" in the top-left corner to exit and return to the home page
+
+## How it Works
+
+The application uses WebRTC for direct peer-to-peer connections between participants:
+
+1. When you join a room, a WebSocket connection is established with the signaling server
+2. The server helps coordinate the initial connection between peers (signaling)
+3. Once connected, video streams flow directly between participants without going through a server
+4. This provides low-latency, high-quality screen sharing with good scalability
+
+## Browser Compatibility
+
+This application works best in modern browsers with WebRTC support:
+- Google Chrome (recommended)
+- Firefox
+- Microsoft Edge
+- Safari (may have limited functionality)
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## Acknowledgments
 
