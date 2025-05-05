@@ -5,10 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "cross-env NODE_ENV=production PORT=3001 node server.js",
-    "server": "cross-env NODE_ENV=development PORT=3001 nodemon server.js",
-    "client": "cross-env NODE_ENV=development vite",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "start": "cross-env NODE_ENV=production vite",
+    "dev": "cross-env NODE_ENV=development vite",
     "build": "cross-env NODE_ENV=production tsc && vite build",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md,html}\"",
@@ -23,11 +21,10 @@
   "description": "WebRTC Screen Sharing Application",
   "dependencies": {
     "express": "^4.18.2",
+    "firebase": "^11.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "simple-peer": "^9.11.1",
-    "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1",
     "uuid": "^9.0.1",
     "ws": "^8.18.2"
   },

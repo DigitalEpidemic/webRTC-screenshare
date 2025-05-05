@@ -9,8 +9,9 @@ A modern WebRTC-based screen sharing application that allows real-time collabora
 - **Multi-participant Support**: Multiple users can join the same room
 - **Stream Selection**: View any participant's shared screen by selecting them from the participants panel
 - **Responsive Design**: Works across various screen sizes with a clean, modern interface
-- **Secure Communication**: Direct peer-to-peer connections with STUN/TURN server support
+- **Secure Communication**: Direct peer-to-peer connections with Firebase signaling
 - **Real-time Updates**: Live participant status and stream availability notifications
+- **Firebase Integration**: Realtime database for room management and signaling
 
 ## Technology Stack
 
@@ -18,8 +19,7 @@ A modern WebRTC-based screen sharing application that allows real-time collabora
 - **UI Styling**: Tailwind CSS for responsive design
 - **Icons**: Lucide React for beautiful, consistent iconography
 - **WebRTC**: Native WebRTC API with peer-to-peer connections
-- **Signaling**: Socket.IO for WebRTC signaling and room management
-- **Server**: Express.js for API endpoints and serving static files
+- **Signaling & Database**: Firebase Realtime Database for signaling and room management
 - **UUID Generation**: uuid package for room ID creation
 - **Development**: Vite for fast development experience with hot module replacement
 
@@ -27,7 +27,7 @@ A modern WebRTC-based screen sharing application that allows real-time collabora
 
 ### Prerequisites
 
-- Node.js (v20.19.1 or higher)
+- Node.js (v20.19.1 or higher recommended)
 - npm or yarn
 
 ### Installation
@@ -45,15 +45,30 @@ A modern WebRTC-based screen sharing application that allows real-time collabora
    npm install
    ```
 
-3. Start the development server:
+3. Set up environment variables for Firebase:
+   
+   Rename `.env.example` to `.env` and populate the following variables:
+
+   ```
+   VITE_FIREBASE_API_KEY=your_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+   VITE_FIREBASE_DATABASE_URL=your_database_url
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+   ```
+
+4. Start the development server:
 
    ```bash
    npm run dev
    ```
 
-   This will start both the React dev server (Vite) and the WebSocket signaling server.
+   This will start the Vite development server with hot module replacement.
 
-4. Visit `http://localhost:5173` in your browser to use the application.
+5. Visit `http://localhost:5173` in your browser to use the application.
 
 ## Usage
 
@@ -72,25 +87,25 @@ A modern WebRTC-based screen sharing application that allows real-time collabora
 
 3. **Sharing Your Screen**:
 
-   - Once in a room, click the "Share Screen" button at the bottom of the video area
+   - Once in a room, click the "Share Screen" button
    - Select which screen/window/tab you want to share in the browser dialog
    - To stop sharing, click "Stop Sharing" or end the share from your browser's UI
 
 4. **Viewing Shared Screens**:
 
-   - Open the "Participants" panel to see who is sharing their screen
+   - See the list of participants who are currently sharing their screens
    - Click on any participant who is sharing to view their screen
    - You can switch between different shared screens at any time
 
 5. **Leaving a Room**:
-   - Click "Leave Room" in the top-left corner to exit and return to the home page
+   - Click "Leave Room" to exit and return to the home page
 
 ## How it Works
 
 The application uses WebRTC for direct peer-to-peer connections between participants:
 
-1. When you join a room, a WebSocket connection is established with the signaling server
-2. The server helps coordinate the initial connection between peers (signaling)
+1. When you join a room, a connection is established with the Firebase Realtime Database
+2. Firebase helps coordinate the initial connection between peers (signaling)
 3. WebRTC peers exchange offers and answers to establish media connections
 4. ICE candidates are gathered and exchanged to find the optimal connection path
 5. Once connected, video streams flow directly between participants without going through a server
@@ -103,7 +118,7 @@ This application works best in modern browsers with WebRTC support:
 - Google Chrome (recommended)
 - Firefox
 - Microsoft Edge
-- Safari (may have limited functionality)
+- Safari (may have limited functionality with WebRTC)
 
 ## Development
 
@@ -117,8 +132,10 @@ To contribute to the project:
    - `npm run build` - Create production build
    - `npm run typecheck` - Check TypeScript types
    - `npm run format` - Format code with Prettier
+   - `npm run format:check` - Check formatting without making changes
    - `npm run lint` - Lint code with ESLint
    - `npm run lint:fix` - Automatically fix linting issues
+   - `npm run lint-format` - Run both linting and formatting fixes
 
 ## License
 
@@ -127,7 +144,7 @@ This project is licensed under the MIT License.
 ## Acknowledgments
 
 - [WebRTC](https://webrtc.org/) for the real-time communication technology
-- [Socket.IO](https://socket.io/) for signaling and real-time communication
+- [Firebase](https://firebase.google.com/) for signaling and realtime database functionality
 - [Tailwind CSS](https://tailwindcss.com/) for the styling framework
 - [Lucide Icons](https://lucide.dev/) for the beautiful icons
 - [Vite](https://vitejs.dev/) for the lightning-fast development experience
