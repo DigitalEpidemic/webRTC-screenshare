@@ -1,4 +1,5 @@
 # Screen Share Application
+
 [![Netlify Status](https://api.netlify.com/api/v1/badges/003bee4f-392e-4592-b692-476729d7137a/deploy-status)](https://app.netlify.com/sites/screenshare-tool/deploys)
 
 Deployed at: https://screenshare-tool.netlify.app/
@@ -49,7 +50,7 @@ A modern WebRTC-based screen sharing application that allows real-time collabora
    ```
 
 3. Set up environment variables for Firebase:
-   
+
    Rename `.env.example` to `.env` and populate the following variables:
 
    ```
@@ -161,17 +162,19 @@ To deploy this application to Netlify:
 1. Create a Netlify account and connect your GitHub repository
 
 2. Configure the following build settings:
+
    - Build command: `npm run build`
    - Publish directory: `dist`
 
 3. Set up your environment variables:
+
    - Add all your Firebase environment variables in the Netlify UI under "Site settings" > "Environment variables"
    - Make sure to include all variables from your `.env` file
 
 4. Troubleshooting common deployment issues:
-   
+
    If you encounter an error like "Deploy directory 'dist' does not exist", ensure:
-   
+
    - Your `package.json` build script is correctly configured to output to the `dist` directory
    - There are no TypeScript or other errors preventing the build from completing
    - Create a `netlify.toml` file in your root directory with:
