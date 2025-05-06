@@ -1,4 +1,7 @@
 # Screen Share Application
+[![Netlify Status](https://api.netlify.com/api/v1/badges/003bee4f-392e-4592-b692-476729d7137a/deploy-status)](https://app.netlify.com/sites/screenshare-tool/deploys)
+
+Deployed at: https://screenshare-tool.netlify.app/
 
 A modern WebRTC-based screen sharing application that allows real-time collaboration through secure peer-to-peer connections.
 
@@ -148,3 +151,46 @@ This project is licensed under the MIT License.
 - [Tailwind CSS](https://tailwindcss.com/) for the styling framework
 - [Lucide Icons](https://lucide.dev/) for the beautiful icons
 - [Vite](https://vitejs.dev/) for the lightning-fast development experience
+
+## Deployment
+
+### Deploying to Netlify
+
+To deploy this application to Netlify:
+
+1. Create a Netlify account and connect your GitHub repository
+
+2. Configure the following build settings:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+
+3. Set up your environment variables:
+   - Add all your Firebase environment variables in the Netlify UI under "Site settings" > "Environment variables"
+   - Make sure to include all variables from your `.env` file
+
+4. Troubleshooting common deployment issues:
+   
+   If you encounter an error like "Deploy directory 'dist' does not exist", ensure:
+   
+   - Your `package.json` build script is correctly configured to output to the `dist` directory
+   - There are no TypeScript or other errors preventing the build from completing
+   - Create a `netlify.toml` file in your root directory with:
+
+   ```toml
+   [build]
+     command = "npm run build"
+     publish = "dist"
+
+   [[redirects]]
+     from = "/*"
+     to = "/index.html"
+     status = 200
+   ```
+
+   - The redirect rule ensures proper routing for single-page applications
+
+5. Deploy your site:
+   - If using Netlify CLI: `netlify deploy --prod`
+   - Or use the Netlify web UI to trigger a deployment
+
+Remember that for WebRTC to work properly, your site should be served over HTTPS, which Netlify provides by default.
