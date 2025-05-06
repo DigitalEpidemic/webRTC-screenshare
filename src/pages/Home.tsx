@@ -3,7 +3,6 @@ import { Monitor, Copy, ArrowRight, RefreshCw } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 interface HomeProps {
-  // eslint-disable-next-line no-unused-vars
   onJoinRoom: (roomId: string) => void;
 }
 

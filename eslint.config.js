@@ -60,7 +60,8 @@ export default [
     rules: {
       'prettier/prettier': 'error',
       'react/react-in-jsx-scope': 'off',
-      'no-unused-vars': 'warn',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars' : 'error',
     },
     settings: {
       react: {

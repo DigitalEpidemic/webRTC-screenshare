@@ -28,11 +28,9 @@ export interface UseWebRTCResult {
   peerStreams: Record<string, MediaStream>;
   peerStreamsWithData: Record<string, PeerStreamData>;
   selectedStream: string | null;
-  // eslint-disable-next-line no-unused-vars
   selectStream: (streamId: string | null) => void;
   shareScreen: () => Promise<MediaStream | null>;
   stopSharing: () => void;
   userId: string;
-  // eslint-disable-next-line no-unused-vars
   requestStream: (peerId: string) => void;
 }
