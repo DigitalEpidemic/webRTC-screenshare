@@ -81,17 +81,6 @@ export function useWebRTCFirebase({ roomId }: UseWebRTCProps): UseWebRTCResult {
     processedAnswerIds,
   });
 
-  // Reset WebRTC state
-  const resetState = useCallback(() => {
-    // Reset various state variables
-    processedOfferIds.current.clear();
-    processedAnswerIds.current.clear();
-    connectionEstablished.current = false;
-
-    console.log('[WebRTC] Resetting initialization for future reconnection');
-    hasInitializedConnection.current = false;
-  }, []);
-
   const { requestStream, connectToRoom, disconnectFromRoom } = useSignallingServer({
     roomId,
     userId,
@@ -133,6 +122,17 @@ export function useWebRTCFirebase({ roomId }: UseWebRTCProps): UseWebRTCResult {
     streamSenders,
     setError,
   });
+
+  // Reset WebRTC state
+  const resetState = useCallback(() => {
+    // Reset various state variables
+    processedOfferIds.current.clear();
+    processedAnswerIds.current.clear();
+    connectionEstablished.current = false;
+
+    console.log('[WebRTC] Resetting initialization for future reconnection');
+    hasInitializedConnection.current = false;
+  }, []);
 
   // Main connection effect
   useEffect(() => {
